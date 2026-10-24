@@ -1,0 +1,666 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResumeAI - Resume Screening System</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f5f9;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+
+        header {
+            background: #172554;
+            color: white;
+            padding: 22px 6%;
+        }
+
+        header h1 {
+            font-size: 27px;
+        }
+
+        header p {
+            color: #cbd5e1;
+            margin-top: 4px;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .stat, .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 3px 15px #0000000b;
+        }
+
+        .stat span {
+            display: block;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .stat strong {
+            font-size: 28px;
+            color: #1d4ed8;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+            margin-bottom: 22px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 17px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 7px;
+            font-size: 14px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input[type="file"] {
+            background: #f8fafc;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .hint {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        button {
+            border: none;
+            padding: 11px 17px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .secondary {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .full {
+            width: 100%;
+        }
+
+        .message {
+            margin-top: 13px;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        .success {
+            color: #15803d;
+        }
+
+        .error {
+            color: #dc2626;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 550px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 13px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #475569;
+        }
+
+        .score {
+            color: #15803d;
+            font-weight: bold;
+        }
+
+        .rank {
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+
+        .keywords {
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .section {
+            margin-bottom: 22px;
+        }
+
+        .empty {
+            color: #64748b;
+            padding: 16px 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        @media (max-width: 760px) {
+            .grid, .stats {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>ResumeAI</h1>
+    <p>PDF Resume Upload, Job Matching and Candidate Ranking</p>
+</header>
+
+<main>
+
+    <!-- Dashboard Statistics -->
+    <div class="stats">
+        <div class="stat">
+            <span>Total Candidates</span>
+            <strong id="totalCandidates">0</strong>
+        </div>
+
+        <div class="stat">
+            <span>Screened Candidates</span>
+            <strong id="screenedCandidates">0</strong>
+        </div>
+
+        <div class="stat">
+            <span>Average Match Score</span>
+            <strong id="averageScore">0%</strong>
+        </div>
+    </div>
+
+    <div class="grid">
+
+        <!-- PDF Resume Upload Form -->
+        <section class="panel">
+            <h2>Add Candidate Resume</h2>
+
+            <form id="uploadForm">
+
+                <div class="form-group">
+                    <label for="candidateName">Candidate Name</label>
+                    <input
+                        type="text"
+                        id="candidateName"
+                        name="name"
+                        placeholder="Enter candidate's full name"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="resumeFile">Upload Resume (PDF)</label>
+                    <input
+                        type="file"
+                        id="resumeFile"
+                        name="resume"
+                        accept=".pdf,application/pdf"
+                        required
+                    >
+                    <p class="hint">
+                        Only PDF files, maximum size 10 MB.
+                    </p>
+                </div>
+
+                <button class="primary full" type="submit" id="uploadButton">
+                    Upload Resume
+                </button>
+
+                <p id="uploadMessage" class="message" role="status"></p>
+
+            </form>
+        </section>
+
+        <!-- Job Description Form -->
+        <section class="panel">
+            <h2>Job Description</h2>
+
+            <form id="screenForm">
+
+                <div class="form-group">
+                    <label for="jobTitle">Job Title</label>
+                    <input
+                        type="text"
+                        id="jobTitle"
+                        placeholder="e.g. Python Data Analyst"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="jobDescription">Required Skills and Job Description</label>
+                    <textarea
+                        id="jobDescription"
+                        placeholder="Example: Python, SQL, Pandas, Machine Learning, Excel, Data Analysis..."
+                        required
+                    ></textarea>
+                </div>
+
+                <button class="primary full" type="submit" id="screenButton">
+                    Run Resume Screening
+                </button>
+
+                <p id="screenMessage" class="message" role="status"></p>
+
+            </form>
+        </section>
+
+    </div>
+
+    <!-- Candidate Database -->
+    <section class="panel section">
+        <h2>Candidate Database</h2>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Candidate Name</th>
+                        <th>Last Match</th>
+                        <th>Last Screened</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="candidateTable">
+                    <tr>
+                        <td colspan="5">Loading candidates...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p id="databaseMessage" class="message" role="status"></p>
+    </section>
+
+    <!-- Screening Results -->
+    <section class="panel section">
+        <h2>Ranked Screening Results</h2>
+        <p class="hint">
+            Candidates are ordered by keyword match score, highest first.
+        </p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Candidate</th>
+                        <th>Match Score</th>
+                        <th>Matched Keywords</th>
+                        <th>Missing Keywords</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTable">
+                    <tr>
+                        <td colspan="5">Run a screening to see results.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    ResumeAI - Flask, Python, SQLite and PDF Text Extraction
+</footer>
+
+<script>
+    const uploadForm = document.getElementById("uploadForm");
+    const screenForm = document.getElementById("screenForm");
+
+    const uploadButton = document.getElementById("uploadButton");
+    const screenButton = document.getElementById("screenButton");
+
+    function showMessage(id, message, isError = false) {
+        const element = document.getElementById(id);
+        element.textContent = message;
+        element.className = "message " + (isError ? "error" : "success");
+    }
+
+    async function apiRequest(url, options = {}) {
+        const response = await fetch(url, options);
+
+        let data;
+
+        try {
+            data = await response.json();
+        } catch {
+            throw new Error("Invalid server response. Check the Flask terminal.");
+        }
+
+        if (!response.ok) {
+            throw new Error(data.error || "Request failed.");
+        }
+
+        return data;
+    }
+
+    // Upload PDF resume
+    uploadForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const name = document.getElementById("candidateName").value.trim();
+        const file = document.getElementById("resumeFile").files[0];
+
+        if (!name) {
+            showMessage("uploadMessage", "Enter candidate name.", true);
+            return;
+        }
+
+        if (!file) {
+            showMessage("uploadMessage", "Select a PDF resume.", true);
+            return;
+        }
+
+        if (!file.name.toLowerCase().endsWith(".pdf")) {
+            showMessage("uploadMessage", "Please select a PDF file.", true);
+            return;
+        }
+
+        if (file.size === 0 || file.size > 10 * 1024 * 1024) {
+            showMessage(
+                "uploadMessage",
+                "File must be non-empty and no larger than 10 MB.",
+                true
+            );
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("resume", file);
+
+        uploadButton.disabled = true;
+        uploadButton.textContent = "Uploading...";
+
+        try {
+            const data = await apiRequest("/api/upload-resume", {
+                method: "POST",
+                body: formData
+            });
+
+            showMessage(
+                "uploadMessage",
+                "Resume uploaded successfully for " + data.name +
+                ". Extracted " + data.extracted_characters + " characters."
+            );
+
+            uploadForm.reset();
+            await loadCandidates();
+            await loadStats();
+
+        } catch (error) {
+            showMessage("uploadMessage", error.message, true);
+        } finally {
+            uploadButton.disabled = false;
+            uploadButton.textContent = "Upload Resume";
+        }
+    });
+
+    // Run job matching and ranking
+    screenForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const jobTitle = document.getElementById("jobTitle").value.trim();
+        const jobDescription =
+            document.getElementById("jobDescription").value.trim();
+
+        if (!jobTitle || !jobDescription) {
+            showMessage("screenMessage", "Enter job title and description.", true);
+            return;
+        }
+
+        screenButton.disabled = true;
+        screenButton.textContent = "Screening...";
+
+        try {
+            const data = await apiRequest("/api/screen", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    job_title: jobTitle,
+                    job_description: jobDescription
+                })
+            });
+
+            renderResults(data.results || []);
+
+            showMessage(
+                "screenMessage",
+                "Screening completed. Candidates ranked: " +
+                (data.results || []).length
+            );
+
+            await loadCandidates();
+            await loadStats();
+
+        } catch (error) {
+            showMessage("screenMessage", error.message, true);
+        } finally {
+            screenButton.disabled = false;
+            screenButton.textContent = "Run Resume Screening";
+        }
+    });
+
+    // Load candidate database
+    async function loadCandidates() {
+        const tbody = document.getElementById("candidateTable");
+
+        try {
+            const candidates = await apiRequest("/api/candidates");
+
+            tbody.replaceChildren();
+
+            if (!candidates.length) {
+                const row = tbody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 5;
+                cell.textContent = "No candidates yet. Upload a PDF first.";
+                return;
+            }
+
+            candidates.forEach(candidate => {
+                const row = tbody.insertRow();
+
+                row.insertCell().textContent = candidate.id;
+                row.insertCell().textContent = candidate.name;
+
+                row.insertCell().textContent =
+                    candidate.last_score == null
+                    ? "Not screened"
+                    : candidate.last_score + "%";
+
+                row.insertCell().textContent =
+                    candidate.last_screened || "—";
+
+                const actionCell = row.insertCell();
+                const deleteButton = document.createElement("button");
+
+                deleteButton.className = "secondary";
+                deleteButton.textContent = "Delete";
+
+                deleteButton.addEventListener("click", async function () {
+                    if (!confirm("Delete " + candidate.name + "?")) {
+                        return;
+                    }
+
+                    deleteButton.disabled = true;
+
+                    try {
+                        await apiRequest(
+                            "/api/candidates/" + candidate.id,
+                            { method: "DELETE" }
+                        );
+
+                        showMessage("databaseMessage", "Candidate deleted.");
+                        await loadCandidates();
+                        await loadStats();
+
+                    } catch (error) {
+                        showMessage("databaseMessage", error.message, true);
+                        deleteButton.disabled = false;
+                    }
+                });
+
+                actionCell.appendChild(deleteButton);
+            });
+
+        } catch (error) {
+            tbody.replaceChildren();
+
+            const row = tbody.insertRow();
+            const cell = row.insertCell();
+            cell.colSpan = 5;
+            cell.textContent = error.message;
+        }
+    }
+
+    // Display ranked results
+    function renderResults(results) {
+        const tbody = document.getElementById("resultsTable");
+        tbody.replaceChildren();
+
+        if (!results.length) {
+            const row = tbody.insertRow();
+            const cell = row.insertCell();
+            cell.colSpan = 5;
+            cell.textContent = "No results available.";
+            return;
+        }
+
+        results.forEach((candidate, index) => {
+            const row = tbody.insertRow();
+
+            const rankCell = row.insertCell();
+            rankCell.className = "rank";
+            rankCell.textContent = "#" + (candidate.rank || index + 1);
+
+            row.insertCell().textContent = candidate.name;
+
+            const scoreCell = row.insertCell();
+            scoreCell.className = "score";
+            scoreCell.textContent = candidate.score + "%";
+
+            const matchedCell = row.insertCell();
+            matchedCell.className = "keywords";
+            matchedCell.textContent =
+                (candidate.matched || []).join(", ") || "None";
+
+            const missedCell = row.insertCell();
+            missedCell.className = "keywords";
+            missedCell.textContent =
+                (candidate.missed || []).join(", ") || "None";
+        });
+    }
+
+    // Dashboard statistics
+    async function loadStats() {
+        try {
+            const stats = await apiRequest("/api/stats");
+
+            document.getElementById("totalCandidates").textContent =
+                stats.total ?? 0;
+
+            document.getElementById("screenedCandidates").textContent =
+                stats.screened ?? 0;
+
+            document.getElementById("averageScore").textContent =
+                (stats.avg_score ?? 0) + "%";
+
+        } catch (error) {
+            console.error("Unable to load statistics:", error.message);
+        }
+    }
+
+    // Initial page load
+    async function initializeApp() {
+        await Promise.all([loadCandidates(), loadStats()]);
+    }
+
+    initializeApp();
+</script>
+
+</body>
+</html>
